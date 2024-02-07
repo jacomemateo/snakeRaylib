@@ -32,12 +32,13 @@ private:
     /* Snake Stuff */
     const int startingLength = 4;
     std::vector<Snake> snake;
-    Direction currentDirection = Direction::RIGHT;
+    Direction currentDirection = Direction::RIGHT; // Starting direction
     Direction lastDirection = currentDirection;
     bool alive = true; // Determines if player is alive
 
     /* Food Stuff */
     int foodX{}, foodY{};
+    int max_score;
 
 public:
     Engine(int screenWidth, int screenHeight, int gridSize);
@@ -50,10 +51,12 @@ public:
     static KeyboardKey getKey();
 
     /* Render Functions */
+    void reset();
     void render(); // Main render function
     void renderGridLines();
     void renderSnake();
     void renderBorders();
+    std::tuple<int, int> generateFoodLocation(); // Generate random position on board for food
     void renderFood();
 
     /* Check for death  */

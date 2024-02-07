@@ -5,7 +5,7 @@ int main(void)
     /* Initialization */
     Engine engine(600, 600, 30);
     engine.init();
-
+    engine.reset();
 
     /* Main game loop */
     while (engine.isRunning()) {

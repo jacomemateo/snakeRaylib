@@ -1,13 +1,18 @@
 #include "Engine.h"
 
 Engine::Engine(int screenWidth, int screenHeight, int gridSize)
-: screenWidth(screenWidth), screenHeight(screenHeight), gridSize(gridSize)
-{
-}
+    : screenWidth(screenWidth), screenHeight(screenHeight), gridSize(gridSize), max_score(0) {}
 
 void Engine::init() {
     InitWindow(screenWidth, screenHeight, "Snake");
     SetTargetFPS(10);
+    srand(time(nullptr));
+}
+
+void Engine::reset() {
+    alive = true;
+    currentDirection = Direction::DOWN;
+    col_background = (Color){160, 190, 170, 255};
     xCells = screenWidth / gridSize;
     yCells = screenHeight / gridSize;
 
@@ -16,7 +21,6 @@ void Engine::init() {
     snake[0].setPos(10, 1);
     foodX = 10;
     foodY = 10;
-    srand(time(nullptr));
 }
 
 void Engine::exit() {
@@ -68,10 +72,10 @@ void Engine::renderGridLines() {
 
 
 void Engine::renderSnake() {
-    DrawRectangle(snake[0].getX() * gridSize, snake[0].getY() * gridSize, gridSize, gridSize, col_snakeHead);
+    DrawRectangle( snake[0].getX() * gridSize + (gridSize - gridSize/1.3)/2 , snake[0].getY() * gridSize + (gridSize - gridSize/1.3)/2, gridSize/1.3, gridSize/1.3, col_snakeHead);
 
     for(int i=1; i < snake.size(); i++) {
-        DrawRectangle(snake[i].getX() * gridSize, snake[i].getY() * gridSize, gridSize, gridSize, col_snakeBody);
+        DrawRectangle( snake[i].getX() * gridSize + (gridSize - gridSize/1.3)/2 , snake[i].getY() * gridSize + (gridSize - gridSize/1.3)/2, gridSize/1.3, gridSize/1.3, col_snakeBody);
     }
 }
 
@@ -91,12 +95,16 @@ void Engine::render() {
         renderFood();
         renderSnake();
 //        renderGridLines();
-        std::string x = "Score: " + std::to_string(snake.size()-4) ;
-        DrawText(x.c_str(), gridSize, 0, gridSize,  WHITE);
+        std::string score_string = "Score: " + std::to_string(snake.size()-4) ;
+        std::string max_scrore_string = "Max Score: " + std::to_string(max_score);
+
+        DrawText(score_string.c_str(), gridSize, 0, gridSize,  WHITE);
+        DrawText(max_scrore_string.c_str(), gridSize*8, 0, gridSize, WHITE);
 
     }
     else {
-        DrawText("you die.", screenWidth / 2 - 100, screenHeight / 2, 40, WHITE);
+        reset();
+        // DrawText("you die.", screenWidth / 2 - 100, screenHeight / 2, 40, WHITE);
     }
 
     EndDrawing();
@@ -106,12 +114,25 @@ bool Engine::isRunning() {
     return !WindowShouldClose();
 }
 
+std::tuple<int, int> Engine::generateFoodLocation() {
+    int l_foodX = 1+(rand()%(xCells-2));
+    int l_foodY = 1+(rand()%(yCells-2));
+
+    return {l_foodX, l_foodY};
+}
+
 void Engine::renderFood() {
     if(snake[0].getX() == foodX && snake[0].getY() == foodY) {
         snake.emplace_back();
 
-        foodX = 1+(rand()%(xCells-2));
-        foodY = 1+(rand()%(yCells-2));
+        std::tie(foodX, foodY) = generateFoodLocation();
+
+        for(int i=0; i<snake.size(); i++) {
+            if(foodX == snake[i].getX() || foodY == snake[i].getY()) {
+                std::tie(foodX, foodY) = generateFoodLocation();
+                i = 0;
+            }
+        }
     }
 
     DrawRectangle(foodX * gridSize, foodY * gridSize, gridSize, gridSize, col_food);
@@ -120,12 +141,14 @@ void Engine::renderFood() {
 void Engine::death() {
     for(int i=1; i < snake.size(); i++) {
         if (snake[0].getX() == snake[i].getX() && snake[0].getY() == snake[i].getY()) {
-            col_background = RED;
             alive = false;
+            if(snake.size() > max_score)
+                max_score = snake.size()-4;
         }
     }
     if(snake[0].getX() == 0 || snake[0].getX() == xCells-1 || snake[0].getY() == 0 || snake[0].getY() == yCells-1) {
-        col_background = RED;
         alive = false;
+        if(snake.size() > max_score)
+            max_score = snake.size()-4;
     }
 }
